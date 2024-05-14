@@ -1,7 +1,7 @@
 const express = require("express")
 const cors = require("cors")
 require("dotenv").config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const PORT = process.env.PORT || 5000
 const app = express()
@@ -45,6 +45,40 @@ const client = new MongoClient(uri, {
         app.post("/apply", async (req, res) => {
           const applyData = req.body
           const result = await appliedCollection.insertOne(applyData)
+          res.send(result)
+        })
+
+        //Delete Method
+        app.delete("/jobs/:id", async(req, res) => {
+          const id = req.params.id;
+          const query = { _id: new ObjectId(id)}
+          const result = await jobsCollection.deleteOne(query)
+          res.send(result)
+        })
+
+        //Update Method
+        app.put('/jobs/:id', async(req, res) => {
+          const id = req.params.id;
+          const filter = {_id: new ObjectId(id)}
+          const options = { upsert: true};
+          const updatedItem = req.body;
+          const SingleItem = {
+            $set: {
+              bannerUrl: updatedItem.bannerUrl,
+              jobTitle: updatedItem.jobTitle,
+              loggedInUser: {
+                name: updatedItem.loggedInUser.name,
+                email: updatedItem.loggedInUser.email
+              },
+              category: updatedItem.category,
+              salaryRange: updatedItem.salaryRange,
+              description: updatedItem.description,
+              postingDate: updatedItem.postingDate,
+              deadline: updatedItem.deadline,
+              applicants: updatedItem.applicants,
+            }
+          }
+          const result = await jobsCollection.updateOne(filter, SingleItem, options);
           res.send(result)
         })
 
