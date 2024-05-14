@@ -27,15 +27,31 @@ const client = new MongoClient(uri, {
   async function run() {
     try {
         const jobsCollection = client.db("JobLinker").collection("jobs")
-        const appliedCollection = client.db("JobLinker").collection("applied")
-        
+        const appliedCollection = client.db("JobLinker").collection("applied")        
 
         //Get all Data from Jobs
         app.get("/jobs", async (req, res) => {
             const result = await jobsCollection.find().toArray()
-
             res.send(result)
         })
+
+        //Save a data for apply database
+        app.post("/apply", async (req, res) => {
+          const applyData = req.body
+          const result = await appliedCollection.insertOne(applyData)
+          res.send(result)
+        })
+
+        app.get("/apply", async (req, res) => {
+          console.log(req.query.email)
+          let query = {}
+          if(req.query?.email){
+            query = {email: req.query.email}
+          }
+          const result = await appliedCollection.find().toArray();
+          res.send(result)
+        })
+
 
 
       // Send a ping to confirm a successful connection
