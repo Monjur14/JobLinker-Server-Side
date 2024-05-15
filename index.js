@@ -1,17 +1,19 @@
 const express = require("express")
 const cors = require("cors")
+const jwt = require("jsonwebtoken")
 require("dotenv").config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const PORT = process.env.PORT || 5000
 const app = express()
 
-const corsOption = {
-    origin: ["http://localhost:5173"],
-    credentials: true,
-    optionSuccessStatus: 200,
-}
-app.use(cors(corsOption))
+// const corsOption = {
+//     origin: ["http://localhost:5173", "https://assignment-11-3a7d3.web.app"],
+//     credentials: true,
+//     optionSuccessStatus: 200,
+// }
+// app.use(cors(corsOption))
+app.use(cors())
 app.use(express.json())
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.zp5qruk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -27,7 +29,14 @@ const client = new MongoClient(uri, {
   async function run() {
     try {
         const jobsCollection = client.db("JobLinker").collection("jobs")
-        const appliedCollection = client.db("JobLinker").collection("applied")        
+        const appliedCollection = client.db("JobLinker").collection("applied")      
+        
+        //jwt implement
+        app.post("/jwt", async (req, res) => {
+          const user = req.body
+          console.log(user)
+          res.send(user)
+        })
 
         //Get all Data from Jobs
         app.get("/jobs", async (req, res) => {
@@ -45,6 +54,14 @@ const client = new MongoClient(uri, {
         app.post("/apply", async (req, res) => {
           const applyData = req.body
           const result = await appliedCollection.insertOne(applyData)
+          
+          const jobId = applyData.jobId;
+            await jobsCollection.updateOne(
+                { _id: new ObjectId(jobId) },
+                { $inc: { applicants: 1 } }
+            );
+
+
           res.send(result)
         })
 
